@@ -1,0 +1,6 @@
+{
+  "name": "TabTube Lite",
+  "description": "Speciale lichtgewicht SmartTube-editie geoptimaliseerd voor oudere tablets zoals de Samsung Galaxy Tab 2 met H.264 codec-lock, 8 MB RAM-buffer, RGB_565 thumbnails en SponsorBlock.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

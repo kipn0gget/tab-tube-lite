@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TabTube Lite</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_subscriptions">Kanalen</string>
+    <string name="tab_library">Bibliotheek</string>
+    <string name="tab_tuning">Tab 2 Tuning</string>
+    <string name="search_hint">Zoek video, ID of YouTube-URL…</string>
+    <string name="action_search">Zoeken</string>
+    <string name="action_refresh">Vernieuwen</string>
+    <string name="action_add_channel">Kanaal toevoegen</string>
+    <string name="action_play">Afspelen</string>
+    <string name="action_pause">Pauzeren</string>
+    <string name="action_save">Bewaren</string>
+    <string name="action_saved">Bewaard</string>
+    <string name="action_close">Sluiten</string>
+    <string name="legacy_profile_active">Tab 2 Modus Actief</string>
+    <string name="sponsorblock_active">SponsorBlock Actief</string>
+    <string name="codec_lock_h264">H.264 Hardware-Lock</string>
+    <string name="audio_only_mode">Alleen Audio (Bespaart CPU)</string>
+    <string name="native_player">VLC Ingebouwde Speler</string>
+</resources>
