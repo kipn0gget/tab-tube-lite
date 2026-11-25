@@ -15,10 +15,12 @@ import android.widget.TextView
 import com.example.data.VideoRepository
 import com.example.data.local.SettingsStore
 import com.example.data.local.TabTubeDbHelper
+import com.example.data.model.AppLanguage
 import com.example.data.model.LegacyTuningSettings
 import com.example.data.model.VideoItem
 import com.example.data.remote.LegacyHttpClient
 import com.example.engine.LegacyHardwareEngine
+import com.example.ui.AppStrings
 import com.example.ui.ChannelsTabView
 import com.example.ui.HomeTabView
 import com.example.ui.LibraryTabView
@@ -41,7 +43,7 @@ class MainActivity : Activity() {
     private lateinit var repository: VideoRepository
 
     private var currentTab = MainTab.HOME
-    private var selectedCategory = "Alles"
+    private var selectedCategory = HomeTabView.ALL_CATEGORY_KEY
     private var isSearchMode = false
     private var isLoadingFeed = true
     private var feedError: String? = null
@@ -50,6 +52,7 @@ class MainActivity : Activity() {
 
     private lateinit var rootFrame: FrameLayout
     private lateinit var mainShell: LinearLayout
+    private lateinit var languageQuickBtn: Button
     private lateinit var headerBadge: TextView
     private lateinit var contentFrame: FrameLayout
     private lateinit var navBarContainer: LinearLayout
@@ -119,6 +122,27 @@ class MainActivity : Activity() {
             setTextColor(TabTubeColors.TEXT_PRIMARY)
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         })
+        languageQuickBtn = Button(this).apply {
+            typeface = fonts.mono
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
+            setTextColor(TabTubeColors.TEXT_PRIMARY)
+            setCompatBackground(pillButtonDrawable(false))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dp(48)
+            ).apply { setMargins(0, 0, dp(8), 0) }
+            setPadding(dp(10), 0, dp(10), 0)
+            setOnClickListener {
+                val nextLang = if (settings.appLanguage == AppLanguage.DUTCH) {
+                    AppLanguage.ENGLISH
+                } else {
+                    AppLanguage.DUTCH
+                }
+                settings = settingsStore.update { it.copy(appLanguage = nextLang) }
+                renderActiveTab()
+            }
+        }
+        topBar.addView(languageQuickBtn)
         headerBadge = TextView(this).apply {
             typeface = fonts.mono
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
@@ -314,7 +338,7 @@ class MainActivity : Activity() {
                 },
                 onFailure = { err ->
                     rawFeedVideos = emptyList()
-                    feedError = err.message ?: "Zoeken mislukt"
+                    feedError = err.message ?: AppStrings.of(settings.appLanguage).searchFailed
                 }
             )
             renderActiveTab()
@@ -357,20 +381,24 @@ class MainActivity : Activity() {
     }
 
     private fun updateHeaderBadge() {
-        val prefix = if (settings.toddlerKidsMode) "Peuter • " else ""
+        val strings = AppStrings.of(settings.appLanguage)
+        languageQuickBtn.text = settings.appLanguage.shortLabel
+        languageQuickBtn.contentDescription = strings.tuningLanguageTitle
+        val prefix = if (settings.toddlerKidsMode) strings.badgeToddlerPrefix else ""
         headerBadge.text = "$prefix${settings.resolutionCap.shortLabel} • ${
             if (settings.forceH264Avc) "H.264" else "Auto"
         } • ${settings.ramBufferProfile.shortLabel}"
     }
 
     private fun renderNavBar() {
+        val strings = AppStrings.of(settings.appLanguage)
         val isWideTablet = resources.configuration.screenWidthDp >= 600
         navBarContainer.removeAllViews()
         val items = listOf(
-            MainTab.HOME to "Home",
-            MainTab.CHANNELS to "Kanalen",
-            MainTab.LIBRARY to "Bibliotheek",
-            MainTab.TUNING to "Tab 2 Tuning"
+            MainTab.HOME to strings.navHome,
+            MainTab.CHANNELS to strings.navChannels,
+            MainTab.LIBRARY to strings.navLibrary,
+            MainTab.TUNING to strings.navTuning
         )
         for ((tab, label) in items) {
             val selected = currentTab == tab
@@ -419,8 +447,8 @@ class MainActivity : Activity() {
 
         when (currentTab) {
             MainTab.HOME -> {
-                val categories = listOf("Alles") + subs.map { it.category }.distinct()
-                val visibleVideos = if (selectedCategory == "Alles" || isSearchMode) {
+                val categories = listOf(HomeTabView.ALL_CATEGORY_KEY) + subs.map { it.category }.distinct()
+                val visibleVideos = if (selectedCategory == HomeTabView.ALL_CATEGORY_KEY || isSearchMode) {
                     rawFeedVideos
                 } else {
                     rawFeedVideos.filter { it.category.equals(selectedCategory, ignoreCase = true) }
@@ -436,7 +464,7 @@ class MainActivity : Activity() {
                     isSearchMode = isSearchMode
                 )
             }
-            MainTab.CHANNELS -> channelsTabView.render(subs)
+            MainTab.CHANNELS -> channelsTabView.render(subs, settings)
             MainTab.LIBRARY -> libraryTabView.render(
                 history = repository.getHistory(),
                 bookmarks = repository.getBookmarks(),

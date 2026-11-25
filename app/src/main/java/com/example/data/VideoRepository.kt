@@ -174,7 +174,12 @@ class VideoRepository(
         val effectiveQuery = KidsContentFilter.enrichSearchQuery(query, settings.toddlerKidsMode)
         ioExecutor.execute {
             val res = try {
-                streamResolver.searchVideos(effectiveQuery, settings.pipedApiBaseUrl).map { list ->
+                streamResolver.searchVideos(
+                    query = effectiveQuery,
+                    baseUrl = settings.pipedApiBaseUrl,
+                    hl = settings.appLanguage.code,
+                    gl = settings.appLanguage.regionCode
+                ).map { list ->
                     KidsContentFilter.filterAndRankResults(
                         items = list,
                         toddlerMode = settings.toddlerKidsMode,
@@ -247,12 +252,12 @@ class VideoRepository(
 
     companion object {
         val DEFAULT_CHANNELS = listOf(
-            ChannelSubscription("UCKvUKaPt2KzudgmnvGewQcQ", "Nijntje (NL)", "Peuter NL", 1L),
-            ChannelSubscription("UClGH2tkl7zft73H2Z3iWLZg", "Sesamstraat", "Peuter NL", 2L),
-            ChannelSubscription("UCVzLLZkDuFGAE2BGdBuBNBg", "Bluey", "Verhalen", 3L),
-            ChannelSubscription("UCAOtE1V7Ots4DjM8JLlrYgg", "Peppa Pig", "Verhalen", 4L),
-            ChannelSubscription("UCLsooMJoIpl_7ux2jvdPB-Q", "Super Simple Songs", "Liedjes", 5L),
-            ChannelSubscription("UCbCmjCuTUZos6Inko4u57UQ", "CoComelon", "Liedjes", 6L)
+            ChannelSubscription("UC5I2hjZYiW9gZPVkvzM8_Cw", "Techmoan", "Tech & Retro", 1L),
+            ChannelSubscription("UCLx053rWZxCiYWsBETgdKrQ", "LGR", "Tech & Retro", 2L),
+            ChannelSubscription("UCsXVk37bltHxD1rDPwtNM8Q", "Kurzgesagt", "Wetenschap", 3L),
+            ChannelSubscription("UCHnyfMqiRRG1u-2MsSQLbXA", "Veritasium", "Wetenschap", 4L),
+            ChannelSubscription("UCLA_DiR1FfKNvjuUpBHmylQ", "NASA", "Ruimte", 5L),
+            ChannelSubscription("UCBJycsmduvYEL83R_U4JriQ", "Marques Brownlee", "Tech & Retro", 6L)
         )
 
         val HARDWARE_BENCHMARK_VIDEO = VideoItem(

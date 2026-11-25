@@ -66,6 +66,7 @@ class LibraryTabView(
         bookmarkIds: Set<String>,
         settings: LegacyTuningSettings
     ) {
+        val strings = AppStrings.of(settings.appLanguage)
         lastHistory = history
         lastBookmarks = bookmarks
         lastBookmarkIds = bookmarkIds
@@ -73,7 +74,7 @@ class LibraryTabView(
 
         headerRow.removeAllViews()
         val historyBtn = Button(context).apply {
-            text = "Geschiedenis (${history.size})"
+            text = String.format(strings.libHistoryFmt, history.size)
             typeface = fonts.body
             setTextColor(if (!showBookmarks) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
             setCompatBackground(context.pillButtonDrawable(!showBookmarks))
@@ -88,7 +89,7 @@ class LibraryTabView(
             }
         }
         val bookmarkBtn = Button(context).apply {
-            text = "Bewaard (${bookmarks.size})"
+            text = String.format(strings.libSavedFmt, bookmarks.size)
             typeface = fonts.body
             setTextColor(if (showBookmarks) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
             setCompatBackground(context.pillButtonDrawable(showBookmarks))
@@ -108,7 +109,7 @@ class LibraryTabView(
 
         if (!showBookmarks && history.isNotEmpty()) {
             headerRow.addView(Button(context).apply {
-                text = "Wis"
+                text = strings.libClear
                 setTextColor(TabTubeColors.SIGNAL_RED)
                 setCompatBackground(context.pillButtonDrawable(false))
                 layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, context.dp(48))
@@ -120,7 +121,7 @@ class LibraryTabView(
 
         if (!showBookmarks) {
             if (history.isEmpty()) {
-                listContainer.addView(emptyMessage("Nog geen kijkgeschiedenis. Afgespeelde video's bewaren automatisch hun positie."))
+                listContainer.addView(emptyMessage(strings.libEmptyHistory))
                 return
             }
             for (entry in history) {
@@ -129,13 +130,13 @@ class LibraryTabView(
                     title = entry.title,
                     channelTitle = entry.channelTitle,
                     channelId = entry.channelId,
-                    category = "Geschiedenis",
-                    publishedLabel = "Bekeken",
+                    category = strings.libHistoryCat,
+                    publishedLabel = strings.libWatched,
                     thumbnailUrl = entry.thumbnailUrl,
                     directStreamUrl = entry.directStreamUrl
                 )
                 val resumeLabel = if (entry.lastPositionMs > 3000L) {
-                    "Hervat bij ${PipedStreamResolver.formatDuration(entry.lastPositionMs / 1000L)}"
+                    "${strings.libResumePrefix}${PipedStreamResolver.formatDuration(entry.lastPositionMs / 1000L)}"
                 } else {
                     null
                 }
@@ -148,6 +149,7 @@ class LibraryTabView(
                         textOnlyMode = settings.textOnlyNoThumbnails,
                         rgb565 = settings.rgb565Thumbnails,
                         resumeLabel = resumeLabel,
+                        strings = strings,
                         onClick = { onOpenVideo(video) },
                         onToggleBookmark = { onToggleBookmark(video) }
                     ).apply {
@@ -160,7 +162,7 @@ class LibraryTabView(
             }
         } else {
             if (bookmarks.isEmpty()) {
-                listContainer.addView(emptyMessage("Nog geen bewaarde video's. Tik op de ster bij een video om deze te bewaren."))
+                listContainer.addView(emptyMessage(strings.libEmptySaved))
                 return
             }
             for (entry in bookmarks) {
@@ -169,8 +171,8 @@ class LibraryTabView(
                     title = entry.title,
                     channelTitle = entry.channelTitle,
                     channelId = entry.channelId,
-                    category = "Bewaard",
-                    publishedLabel = "Opgeslagen",
+                    category = strings.libSavedCat,
+                    publishedLabel = strings.libSavedLabel,
                     thumbnailUrl = entry.thumbnailUrl,
                     directStreamUrl = entry.directStreamUrl
                 )
@@ -183,6 +185,7 @@ class LibraryTabView(
                         textOnlyMode = settings.textOnlyNoThumbnails,
                         rgb565 = settings.rgb565Thumbnails,
                         resumeLabel = null,
+                        strings = strings,
                         onClick = { onOpenVideo(video) },
                         onToggleBookmark = { onToggleBookmark(video) }
                     ).apply {

@@ -44,7 +44,52 @@ class TuningTabView(
     }
 
     fun render(settings: LegacyTuningSettings, telemetry: DeviceTelemetry) {
+        val strings = AppStrings.of(settings.appLanguage)
         container.removeAllViews()
+
+        // Language Selector Card
+        val langCard = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(context.dp(14), context.dp(14), context.dp(14), context.dp(14))
+            setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SURFACE_DARK, TabTubeColors.BORDER_SUBTLE, 1, 14))
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 0, 0, context.dp(14)) }
+        }
+        langCard.addView(TextView(context).apply {
+            text = strings.tuningLanguageTitle
+            typeface = fonts.heading
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTextColor(TabTubeColors.TEXT_PRIMARY)
+        })
+        langCard.addView(TextView(context).apply {
+            text = strings.tuningLanguageSubtitle
+            typeface = fonts.body
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+            setTextColor(TabTubeColors.TEXT_SECONDARY)
+            setPadding(0, context.dp(4), 0, context.dp(10))
+        })
+        val langRow = LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+        }
+        for ((index, lang) in com.example.data.model.AppLanguage.entries.withIndex()) {
+            val selected = settings.appLanguage == lang
+            langRow.addView(Button(context).apply {
+                text = lang.displayName
+                typeface = if (selected) fonts.heading else fonts.body
+                setTextColor(if (selected) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
+                setCompatBackground(context.pillButtonDrawable(selected))
+                layoutParams = LinearLayout.LayoutParams(0, context.dp(48), 1f).apply {
+                    if (index == 0) setMargins(0, 0, context.dp(8), 0)
+                }
+                setOnClickListener {
+                    onUpdateSettings { it.copy(appLanguage = lang) }
+                }
+            })
+        }
+        langCard.addView(langRow)
+        container.addView(langCard)
 
         // Hero Banner + Presets Card
         val heroCard = LinearLayout(context).apply {
@@ -65,7 +110,7 @@ class TuningTabView(
         bannerFrame.addView(ImageView(context).apply {
             setImageResource(R.drawable.img_tab2_banner_1795098746189)
             scaleType = ImageView.ScaleType.CENTER_CROP
-            contentDescription = "Galaxy Tab 2 hardware-optimalisatie banner"
+            contentDescription = strings.tuningHeroTitle
             layoutParams = FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -82,7 +127,7 @@ class TuningTabView(
             )
         }
         overlay.addView(TextView(context).apply {
-            text = if (settings.isGalaxyTab2Preset) "GALAXY TAB 2 PROFIEL ACTIEF" else "AANGEPAST PROFIEL"
+            text = if (settings.isGalaxyTab2Preset) strings.tuningProfileTab2 else strings.tuningProfileCustom
             typeface = fonts.mono
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
             setTextColor(TabTubeColors.PHOSPHOR_TEAL)
@@ -94,7 +139,7 @@ class TuningTabView(
             )
         })
         overlay.addView(TextView(context).apply {
-            text = "SmartTube Legacy Hardware-Engine"
+            text = strings.tuningHeroTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -108,7 +153,7 @@ class TuningTabView(
             setPadding(context.dp(14), context.dp(12), context.dp(14), context.dp(14))
         }
         heroBody.addView(TextView(context).apply {
-            text = "Speciaal gebouwd voor oudere Android 4.1+ tablets met 1 GB RAM en dual-core CPU (zoals Samsung Galaxy Tab 2)."
+            text = strings.tuningHeroDesc
             typeface = fonts.body
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setTextColor(TabTubeColors.TEXT_SECONDARY)
@@ -118,7 +163,7 @@ class TuningTabView(
             setPadding(0, context.dp(12), 0, 0)
         }
         presetRow.addView(Button(context).apply {
-            text = "⚡ Tab 2 (1GB RAM)"
+            text = strings.tuningBtnTab2
             typeface = fonts.heading
             setTextColor(TabTubeColors.TEXT_PRIMARY)
             setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SIGNAL_RED, TabTubeColors.SIGNAL_RED, 0, 8))
@@ -128,7 +173,7 @@ class TuningTabView(
             setOnClickListener { onApplyTab2Preset() }
         })
         presetRow.addView(Button(context).apply {
-            text = "Standaard Tablet"
+            text = strings.tuningBtnStandard
             typeface = fonts.body
             setTextColor(TabTubeColors.TEXT_PRIMARY)
             setCompatBackground(context.pillButtonDrawable(false))
@@ -154,7 +199,7 @@ class TuningTabView(
             gravity = Gravity.CENTER_VERTICAL
         }
         teleHeader.addView(TextView(context).apply {
-            text = "Live Apparaat & Codec Telemetrie"
+            text = strings.tuningTeleTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -168,24 +213,24 @@ class TuningTabView(
             setOnClickListener { onRefreshTelemetry() }
         })
         teleCard.addView(teleHeader)
-        teleCard.addView(telemetryRow("Systeem RAM", "${telemetry.availableRamMb} MB vrij / ${telemetry.totalRamMb} MB"))
-        teleCard.addView(telemetryRow("App JVM Heap", "${telemetry.appHeapUsedMb} MB / ${telemetry.appHeapMaxMb} MB"))
-        teleCard.addView(telemetryRow("OS & CPU ABI", "${telemetry.androidVersionLabel} • ${telemetry.cpuAbi}"))
+        teleCard.addView(telemetryRow(strings.tuningTeleRam, String.format(strings.tuningTeleRamFreeFmt, telemetry.availableRamMb, telemetry.totalRamMb)))
+        teleCard.addView(telemetryRow(strings.tuningTeleHeap, "${telemetry.appHeapUsedMb} MB / ${telemetry.appHeapMaxMb} MB"))
+        teleCard.addView(telemetryRow(strings.tuningTeleOs, "${telemetry.androidVersionLabel} • ${telemetry.cpuAbi}"))
         teleCard.addView(
             telemetryRow(
-                "VP9 Hardware",
-                if (telemetry.supportsVp9Hardware) "Ondersteund" else "Geen (software VP9 vermeden)"
+                strings.tuningTeleVp9,
+                if (telemetry.supportsVp9Hardware) strings.tuningVp9Yes else strings.tuningVp9No
             )
         )
         teleCard.addView(
             telemetryRow(
-                "H.264 HW Decoders",
-                if (telemetry.h264HardwareDecoders.isEmpty()) "Systeem/OMX standaard"
+                strings.tuningTeleH264,
+                if (telemetry.h264HardwareDecoders.isEmpty()) strings.tuningH264Fallback
                 else telemetry.h264HardwareDecoders.joinToString(", ")
             )
         )
         teleCard.addView(Button(context).apply {
-            text = "▶ Test Hardware Player (H.264 MP4 Benchmark)"
+            text = strings.tuningBtnBenchmark
             typeface = fonts.heading
             setTextColor(TabTubeColors.PHOSPHOR_TEAL)
             setCompatBackground(context.pillButtonDrawable(true))
@@ -208,7 +253,7 @@ class TuningTabView(
             ).apply { setMargins(0, 0, 0, context.dp(14)) }
         }
         capCard.addView(TextView(context).apply {
-            text = "Maximale Video-Resolutie"
+            text = strings.tuningResTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -220,7 +265,7 @@ class TuningTabView(
         for (cap in ResolutionCap.entries) {
             val selected = settings.resolutionCap == cap
             resRow.addView(Button(context).apply {
-                text = "${cap.shortLabel} (${cap.description})"
+                text = "${cap.shortLabel} (${cap.localizedDescription(settings.appLanguage)})"
                 setTextColor(if (selected) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
                 setCompatBackground(context.pillButtonDrawable(selected))
                 setPadding(context.dp(12), 0, context.dp(12), 0)
@@ -234,7 +279,7 @@ class TuningTabView(
         capCard.addView(HorizontalScrollView(context).apply { addView(resRow) })
 
         capCard.addView(TextView(context).apply {
-            text = "Thumbnail & Geheugencache Limiet"
+            text = strings.tuningCacheTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -271,7 +316,7 @@ class TuningTabView(
             ).apply { setMargins(0, 0, 0, context.dp(14)) }
         }
         switchesCard.addView(TextView(context).apply {
-            text = "Codec, Geheugen & SmartTube Opties"
+            text = strings.tuningOptionsTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -279,52 +324,52 @@ class TuningTabView(
         })
         switchesCard.addView(
             toggleRow(
-                "Peutermodus (YouTube Kids 1–4 jaar)",
-                "Geeft voorkeur aan peuterkanalen, kindvriendelijke zoekresultaten en filtert ongeschikte video's",
-                settings.toddlerKidsMode
-            ) { v -> onUpdateSettings { it.copy(toddlerKidsMode = v) } }
-        )
-        switchesCard.addView(
-            toggleRow(
-                "Forceer H.264 / AVC Hardware-Decoder",
-                "Vermijdt trage software-decodering van VP9/AV1",
+                strings.tuningOptH264Title,
+                strings.tuningOptH264Desc,
                 settings.forceH264Avc
             ) { v -> onUpdateSettings { it.copy(forceH264Avc = v) } }
         )
         switchesCard.addView(
             toggleRow(
-                "RGB_565 Thumbnails (50% minder RAM)",
-                "16-bit thumbnails in plaats van 32-bit ARGB_8888",
+                strings.tuningOptRgbTitle,
+                strings.tuningOptRgbDesc,
                 settings.rgb565Thumbnails
             ) { v -> onUpdateSettings { it.copy(rgb565Thumbnails = v) } }
         )
         switchesCard.addView(
             toggleRow(
-                "Tekstmodus (geen thumbnails laden)",
-                "Maximale snelheid op verouderde hardware",
+                strings.tuningOptTextTitle,
+                strings.tuningOptTextDesc,
                 settings.textOnlyNoThumbnails
             ) { v -> onUpdateSettings { it.copy(textOnlyNoThumbnails = v) } }
         )
         switchesCard.addView(
             toggleRow(
-                "Zero-Jank UI (geen schaduwen/animaties)",
-                "Voorkomt frame-drops op PowerVR SGX540 GPU",
+                strings.tuningOptAnimTitle,
+                strings.tuningOptAnimDesc,
                 settings.disableAnimations
             ) { v -> onUpdateSettings { it.copy(disableAnimations = v) } }
         )
         switchesCard.addView(
             toggleRow(
-                "SponsorBlock Automatisch Overslaan",
-                "Slaat sponsors, intro's en outro's over via sponsor.ajay.app",
+                strings.tuningOptSponsorTitle,
+                strings.tuningOptSponsorDesc,
                 settings.sponsorBlockEnabled
             ) { v -> onUpdateSettings { it.copy(sponsorBlockEnabled = v) } }
         )
         switchesCard.addView(
             toggleRow(
-                "Alleen Audio Modus",
-                "Schakelt videodecoder uit voor vloeiende audio/podcasts",
+                strings.tuningOptAudioTitle,
+                strings.tuningOptAudioDesc,
                 settings.audioOnlyMode
             ) { v -> onUpdateSettings { it.copy(audioOnlyMode = v) } }
+        )
+        switchesCard.addView(
+            toggleRow(
+                strings.tuningOptToddlerTitle,
+                strings.tuningOptToddlerDesc,
+                settings.toddlerKidsMode
+            ) { v -> onUpdateSettings { it.copy(toddlerKidsMode = v) } }
         )
         container.addView(switchesCard)
 
@@ -335,7 +380,7 @@ class TuningTabView(
             setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SURFACE_DARK, TabTubeColors.BORDER_SUBTLE, 1, 14))
         }
         pipedCard.addView(TextView(context).apply {
-            text = "Piped API Server"
+            text = strings.tuningPipedTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -355,7 +400,7 @@ class TuningTabView(
         }
         pipedCard.addView(pipedEdit)
         pipedCard.addView(Button(context).apply {
-            text = "Server opslaan"
+            text = strings.tuningPipedSave
             setTextColor(TabTubeColors.PHOSPHOR_TEAL)
             setCompatBackground(context.pillButtonDrawable(false))
             setPadding(context.dp(14), context.dp(10), context.dp(14), context.dp(10))

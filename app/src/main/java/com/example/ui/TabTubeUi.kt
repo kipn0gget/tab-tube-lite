@@ -126,6 +126,7 @@ fun buildVideoCardView(
     textOnlyMode: Boolean,
     rgb565: Boolean,
     resumeLabel: String?,
+    strings: AppStrings = AppStrings.DUTCH,
     onClick: () -> Unit,
     onToggleBookmark: () -> Unit
 ): View {
@@ -242,7 +243,7 @@ fun buildVideoCardView(
         setImageResource(
             if (isBookmarked) android.R.drawable.btn_star_big_on else android.R.drawable.btn_star_big_off
         )
-        contentDescription = if (isBookmarked) "Verwijder bladwijzer" else "Bewaar video"
+        contentDescription = if (isBookmarked) strings.cdRemoveBookmark else strings.cdSaveBookmark
         setCompatBackground(context.focusableCardDrawable(TabTubeColors.SURFACE_DARK, TabTubeColors.SURFACE_DARK, TabTubeColors.SIGNAL_RED, 8))
         layoutParams = LinearLayout.LayoutParams(context.dp(48), context.dp(48))
         setOnClickListener { onToggleBookmark() }

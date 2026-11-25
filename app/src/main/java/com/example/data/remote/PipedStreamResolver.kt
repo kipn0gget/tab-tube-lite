@@ -114,8 +114,8 @@ class PipedStreamResolver {
                           "clientName": "${spec.clientName}",
                           "clientVersion": "${spec.clientVersion}",
                           ${spec.extraContext},
-                          "hl": "nl",
-                          "gl": "NL"
+                          "hl": "${settings.appLanguage.code}",
+                          "gl": "${settings.appLanguage.regionCode}"
                         }
                       },
                       "contentCheckOk": true,
@@ -286,14 +286,19 @@ class PipedStreamResolver {
         }
     }
 
-    fun searchVideos(query: String, baseUrl: String): Result<List<VideoItem>> {
+    fun searchVideos(
+        query: String,
+        baseUrl: String,
+        hl: String = "nl",
+        gl: String = "NL"
+    ): Result<List<VideoItem>> {
         val trimmed = query.trim()
         if (trimmed.isBlank()) return Result.success(emptyList())
 
         var lastError: Throwable? = null
 
         // Tier 1: Direct YouTube InnerTube Search (fast, no external Piped proxy required)
-        searchViaInnerTube(trimmed).fold(
+        searchViaInnerTube(trimmed, hl, gl).fold(
             onSuccess = { list -> if (list.isNotEmpty()) return Result.success(list) },
             onFailure = { lastError = it }
         )
@@ -378,7 +383,7 @@ class PipedStreamResolver {
         return Result.failure(lastError ?: IllegalStateException("Zoeken niet beschikbaar"))
     }
 
-    private fun searchViaInnerTube(query: String): Result<List<VideoItem>> {
+    private fun searchViaInnerTube(query: String, hl: String, gl: String): Result<List<VideoItem>> {
         return try {
             val escapedQuery = JSONObject.quote(query)
             val payload = """
@@ -387,8 +392,8 @@ class PipedStreamResolver {
                     "client": {
                       "clientName": "WEB",
                       "clientVersion": "2.20241115.01.00",
-                      "hl": "nl",
-                      "gl": "NL"
+                      "hl": "$hl",
+                      "gl": "$gl"
                     }
                   },
                   "query": $escapedQuery

@@ -86,6 +86,10 @@ class HomeTabView(
         setPadding(context.dp(14), context.dp(4), context.dp(14), context.dp(18))
     }
 
+    private lateinit var searchBtn: Button
+    private lateinit var clearBtn: Button
+    private lateinit var refreshBtn: Button
+
     init {
         val searchRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -93,7 +97,7 @@ class HomeTabView(
             setPadding(context.dp(14), context.dp(10), context.dp(14), context.dp(8))
         }
 
-        val searchBtn = Button(context).apply {
+        searchBtn = Button(context).apply {
             text = "Zoek"
             typeface = fonts.heading
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -108,7 +112,7 @@ class HomeTabView(
             setOnClickListener { onSearch(searchInput.text.toString()) }
         }
 
-        val clearBtn = Button(context).apply {
+        clearBtn = Button(context).apply {
             text = "Wis"
             typeface = fonts.body
             setTextColor(TabTubeColors.TEXT_SECONDARY)
@@ -125,7 +129,7 @@ class HomeTabView(
             }
         }
 
-        val refreshBtn = Button(context).apply {
+        refreshBtn = Button(context).apply {
             text = "↻"
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
@@ -178,18 +182,23 @@ class HomeTabView(
         settings: LegacyTuningSettings,
         isSearchMode: Boolean
     ) {
+        val strings = AppStrings.of(settings.appLanguage)
         statusBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        searchBtn.text = strings.btnSearch
+        clearBtn.text = strings.btnClear
+        refreshBtn.contentDescription = strings.cdRefreshFeed
         searchInput.hint = if (settings.toddlerKidsMode) {
-            "Zoek peutervideo, liedje of YouTube-URL…"
+            strings.searchHintToddler
         } else {
-            "Zoek video, ID of YouTube-URL…"
+            strings.searchHintStandard
         }
 
         categoryRow.removeAllViews()
         for (cat in categories) {
             val selected = cat == selectedCategory
+            val label = if (cat == ALL_CATEGORY_KEY) strings.categoryAll else strings.formatCategory(cat)
             val chip = TextView(context).apply {
-                text = cat
+                text = label
                 typeface = fonts.body
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                 setTextColor(if (selected) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
@@ -212,7 +221,7 @@ class HomeTabView(
         if (settings.toddlerKidsMode) {
             toddlerTopicScroll.visibility = View.VISIBLE
             toddlerTopicRow.addView(TextView(context).apply {
-                text = "Peuter:"
+                text = strings.toddlerChipLabel
                 typeface = fonts.mono
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
                 setTextColor(TabTubeColors.AMBER_SPONSOR)
@@ -256,11 +265,11 @@ class HomeTabView(
         if (isLoading && videos.isEmpty()) {
             val loadingText = TextView(context).apply {
                 text = if (isSearchMode && settings.toddlerKidsMode) {
-                    "Peutervriendelijke video's zoeken…"
+                    strings.loadingSearchToddler
                 } else if (isSearchMode) {
-                    "Zoeken op YouTube (beveiligde Tab 2-verbinding)…"
+                    strings.loadingSearchStandard
                 } else {
-                    "Lichte RSS-feed laden (laag geheugengebruik)…"
+                    strings.loadingFeed
                 }
                 typeface = fonts.body
                 setTextColor(TabTubeColors.TEXT_SECONDARY)
@@ -278,7 +287,7 @@ class HomeTabView(
                 setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SURFACE_DARK, TabTubeColors.BORDER_SUBTLE, 1, 14))
             }
             errCard.addView(TextView(context).apply {
-                text = if (isSearchMode) "Zoeken mislukt" else "Feed kon niet geladen worden"
+                text = if (isSearchMode) strings.searchFailedTitle else strings.feedFailedTitle
                 typeface = fonts.heading
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
                 setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -291,14 +300,14 @@ class HomeTabView(
             })
             val btnRow = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
             btnRow.addView(Button(context).apply {
-                text = "Opnieuw proberen"
+                text = strings.btnRetry
                 setTextColor(TabTubeColors.TEXT_PRIMARY)
                 setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SIGNAL_RED, TabTubeColors.SIGNAL_RED, 0, 8))
                 setPadding(context.dp(14), context.dp(10), context.dp(14), context.dp(10))
                 setOnClickListener { onRefresh() }
             })
             btnRow.addView(Button(context).apply {
-                text = "H.264 Benchmark"
+                text = strings.btnBenchmark
                 setTextColor(TabTubeColors.PHOSPHOR_TEAL)
                 setCompatBackground(context.pillButtonDrawable(true))
                 layoutParams = LinearLayout.LayoutParams(
@@ -315,7 +324,7 @@ class HomeTabView(
 
         if (videos.isEmpty()) {
             gridContainer.addView(TextView(context).apply {
-                text = if (isSearchMode) "Geen video's gevonden." else "Geen video's in deze categorie."
+                text = if (isSearchMode) strings.emptySearch else strings.emptyCategory
                 typeface = fonts.body
                 setTextColor(TabTubeColors.TEXT_SECONDARY)
                 setPadding(context.dp(12), context.dp(24), context.dp(12), context.dp(12))
@@ -353,6 +362,7 @@ class HomeTabView(
                         textOnlyMode = settings.textOnlyNoThumbnails,
                         rgb565 = settings.rgb565Thumbnails,
                         resumeLabel = null,
+                        strings = strings,
                         onClick = { onOpenVideo(video) },
                         onToggleBookmark = { onToggleBookmark(video) }
                     ).apply {
@@ -371,5 +381,9 @@ class HomeTabView(
             }
             gridContainer.addView(row)
         }
+    }
+
+    companion object {
+        const val ALL_CATEGORY_KEY = "__ALL__"
     }
 }

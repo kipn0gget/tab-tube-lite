@@ -1,5 +1,15 @@
 package com.example.data.model
 
+enum class AppLanguage(
+    val code: String,
+    val regionCode: String,
+    val shortLabel: String,
+    val displayName: String
+) {
+    DUTCH("nl", "NL", "NL", "Nederlands"),
+    ENGLISH("en", "US", "EN", "English")
+}
+
 enum class ResolutionCap(
     val maxWidth: Int,
     val maxHeight: Int,
@@ -8,7 +18,16 @@ enum class ResolutionCap(
 ) {
     SD_360P(640, 360, "360p", "Ultra-licht voor dual-core CPU"),
     SD_480P(854, 480, "480p", "Aanbevolen voor Galaxy Tab 2"),
-    HD_720P(1280, 720, "720p", "Alleen indien H.264 HW ondersteund")
+    HD_720P(1280, 720, "720p", "Alleen indien H.264 HW ondersteund");
+
+    fun localizedDescription(lang: AppLanguage): String = when (lang) {
+        AppLanguage.DUTCH -> description
+        AppLanguage.ENGLISH -> when (this) {
+            SD_360P -> "Ultra-light for dual-core CPU"
+            SD_480P -> "Recommended for Galaxy Tab 2"
+            HD_720P -> "Only if H.264 HW supported"
+        }
+    }
 }
 
 enum class RamBufferProfile(
@@ -18,7 +37,16 @@ enum class RamBufferProfile(
 ) {
     TAB2_4MB(4, "4 MB (Tab 2)", "Minimaal geheugen voor 1 GB RAM"),
     BALANCED_8MB(8, "8 MB", "Gebalanceerd voor oudere tablets"),
-    STANDARD_16MB(16, "16 MB", "Standaard thumbnail- & netwerkcache")
+    STANDARD_16MB(16, "16 MB", "Standaard thumbnail- & netwerkcache");
+
+    fun localizedDescription(lang: AppLanguage): String = when (lang) {
+        AppLanguage.DUTCH -> description
+        AppLanguage.ENGLISH -> when (this) {
+            TAB2_4MB -> "Minimal memory for 1 GB RAM"
+            BALANCED_8MB -> "Balanced for older tablets"
+            STANDARD_16MB -> "Standard thumbnail & network cache"
+        }
+    }
 }
 
 data class LegacyTuningSettings(
@@ -30,7 +58,8 @@ data class LegacyTuningSettings(
     val disableAnimations: Boolean = true,
     val sponsorBlockEnabled: Boolean = true,
     val audioOnlyMode: Boolean = false,
-    val toddlerKidsMode: Boolean = true,
+    val toddlerKidsMode: Boolean = false,
+    val appLanguage: AppLanguage = AppLanguage.DUTCH,
     val pipedApiBaseUrl: String = "https://pipedapi.kavin.rocks"
 ) {
     val isGalaxyTab2Preset: Boolean

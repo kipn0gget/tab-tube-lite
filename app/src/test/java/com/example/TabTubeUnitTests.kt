@@ -70,7 +70,8 @@ class TabTubeUnitTests {
         assertTrue(settings.forceH264Avc)
         assertTrue(settings.rgb565Thumbnails)
         assertTrue(settings.disableAnimations)
-        assertTrue(settings.toddlerKidsMode)
+        org.junit.Assert.assertFalse(settings.toddlerKidsMode)
+        assertEquals(com.example.data.model.AppLanguage.DUTCH, settings.appLanguage)
     }
 
     @Test
@@ -398,5 +399,53 @@ class TabTubeUnitTests {
         assertEquals(1, subs.size)
         assertEquals("UCcustomToddler", subs[0].channelId)
         helper.close()
+    }
+
+    @Test
+    fun `tabTubeDbHelper v6 upgrade replaces untouched toddler defaults and keeps custom channels`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbFile = context.getDatabasePath("tabtube_lite.db")
+        dbFile.parentFile?.mkdirs()
+        if (dbFile.exists()) dbFile.delete()
+
+        val v5Db = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(dbFile, null)
+        v5Db.execSQL("CREATE TABLE subscriptions (channel_id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, added_at INTEGER NOT NULL)")
+        v5Db.execSQL("INSERT INTO subscriptions (channel_id, name, category, added_at) VALUES ('UCKvUKaPt2KzudgmnvGewQcQ', 'Nijntje (NL)', 'Peuter NL', 1)")
+        v5Db.execSQL("INSERT INTO subscriptions (channel_id, name, category, added_at) VALUES ('UCcustomStandard', 'Eigen Kanaal', 'Tech & Retro', 9999)")
+        v5Db.execSQL("CREATE TABLE watch_history (video_id TEXT PRIMARY KEY, title TEXT NOT NULL, channel_title TEXT NOT NULL, channel_id TEXT NOT NULL, thumbnail_url TEXT NOT NULL, direct_stream_url TEXT, last_position_ms INTEGER NOT NULL, duration_ms INTEGER NOT NULL, watched_at INTEGER NOT NULL)")
+        v5Db.execSQL("CREATE TABLE bookmarks (video_id TEXT PRIMARY KEY, title TEXT NOT NULL, channel_title TEXT NOT NULL, channel_id TEXT NOT NULL, thumbnail_url TEXT NOT NULL, direct_stream_url TEXT, saved_at INTEGER NOT NULL)")
+        v5Db.version = 5
+        v5Db.close()
+
+        val helper = com.example.data.local.TabTubeDbHelper(context)
+        val subs = helper.getSubscriptions()
+        assertEquals(1, subs.size)
+        assertEquals("UCcustomStandard", subs[0].channelId)
+        helper.close()
+    }
+
+    @Test
+    fun `settingsStore switches language to English and resets legacy toddler flag to standard YouTube`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        context.getSharedPreferences("tabtube_legacy_tuning", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .putBoolean("toddler_kids_mode", true)
+            .commit()
+
+        val store = com.example.data.local.SettingsStore(context)
+        val initial = store.load()
+        org.junit.Assert.assertFalse(initial.toddlerKidsMode)
+        assertEquals(com.example.data.model.AppLanguage.DUTCH, initial.appLanguage)
+
+        val updated = store.update { it.copy(appLanguage = com.example.data.model.AppLanguage.ENGLISH) }
+        assertEquals(com.example.data.model.AppLanguage.ENGLISH, updated.appLanguage)
+        assertEquals(com.example.data.model.AppLanguage.ENGLISH, store.load().appLanguage)
+
+        val enStrings = com.example.ui.AppStrings.of(com.example.data.model.AppLanguage.ENGLISH)
+        assertEquals("Channels", enStrings.navChannels)
+        assertEquals("Library", enStrings.navLibrary)
+        assertEquals("All", enStrings.categoryAll)
+        assertEquals("Science", enStrings.formatCategory("Wetenschap"))
     }
 }

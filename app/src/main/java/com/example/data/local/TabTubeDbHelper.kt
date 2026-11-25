@@ -23,6 +23,9 @@ class TabTubeDbHelper(context: Context) : SQLiteOpenHelper(
         if (oldVersion < 5) {
             clearUntouchedLegacyTechDefaults(db)
         }
+        if (oldVersion < 6) {
+            clearUntouchedToddlerDefaults(db)
+        }
     }
 
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -42,6 +45,25 @@ class TabTubeDbHelper(context: Context) : SQLiteOpenHelper(
                     'UCHnyfMqiRRG1u-2MsSQLbXA',
                     'UCLA_DiR1FfKNvjuUpBHmylQ',
                     'UCBJycsmduvYEL83R_U4JriQ'
+                  )
+                """.trimIndent()
+            )
+        }
+    }
+
+    private fun clearUntouchedToddlerDefaults(db: SQLiteDatabase) {
+        runCatching {
+            db.execSQL(
+                """
+                DELETE FROM subscriptions
+                WHERE added_at <= 10
+                  AND channel_id IN (
+                    'UCKvUKaPt2KzudgmnvGewQcQ',
+                    'UClGH2tkl7zft73H2Z3iWLZg',
+                    'UCVzLLZkDuFGAE2BGdBuBNBg',
+                    'UCAOtE1V7Ots4DjM8JLlrYgg',
+                    'UCLsooMJoIpl_7ux2jvdPB-Q',
+                    'UCbCmjCuTUZos6Inko4u57UQ'
                   )
                 """.trimIndent()
             )
@@ -409,6 +431,6 @@ class TabTubeDbHelper(context: Context) : SQLiteOpenHelper(
 
     companion object {
         internal const val DB_NAME = "tabtube_lite.db"
-        internal const val DB_VERSION = 5
+        internal const val DB_VERSION = 6
     }
 }

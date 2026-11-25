@@ -2,6 +2,7 @@ package com.example.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.data.model.AppLanguage
 import com.example.data.model.LegacyTuningSettings
 import com.example.data.model.RamBufferProfile
 import com.example.data.model.ResolutionCap
@@ -12,6 +13,13 @@ class SettingsStore(context: Context) {
         .getSharedPreferences("tabtube_legacy_tuning", Context.MODE_PRIVATE)
 
     fun load(): LegacyTuningSettings {
+        if (!prefs.getBoolean(KEY_STANDARD_YOUTUBE_MIGRATED, false)) {
+            prefs.edit()
+                .putBoolean(KEY_TODDLER_KIDS_MODE, false)
+                .putBoolean(KEY_STANDARD_YOUTUBE_MIGRATED, true)
+                .apply()
+        }
+
         val resName = prefs.getString(KEY_RES_CAP, ResolutionCap.SD_480P.name)
         val resCap = resName?.let { runCatching { ResolutionCap.valueOf(it) }.getOrNull() }
             ?: ResolutionCap.SD_480P
@@ -19,6 +27,10 @@ class SettingsStore(context: Context) {
         val ramName = prefs.getString(KEY_RAM_BUFFER, RamBufferProfile.TAB2_4MB.name)
         val ramProfile = ramName?.let { runCatching { RamBufferProfile.valueOf(it) }.getOrNull() }
             ?: RamBufferProfile.TAB2_4MB
+
+        val langName = prefs.getString(KEY_APP_LANGUAGE, AppLanguage.DUTCH.name)
+        val appLanguage = langName?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() }
+            ?: AppLanguage.DUTCH
 
         return LegacyTuningSettings(
             resolutionCap = resCap,
@@ -29,7 +41,8 @@ class SettingsStore(context: Context) {
             disableAnimations = prefs.getBoolean(KEY_NO_ANIM, true),
             sponsorBlockEnabled = prefs.getBoolean(KEY_SPONSORBLOCK, true),
             audioOnlyMode = prefs.getBoolean(KEY_AUDIO_ONLY, false),
-            toddlerKidsMode = prefs.getBoolean(KEY_TODDLER_KIDS_MODE, true),
+            toddlerKidsMode = prefs.getBoolean(KEY_TODDLER_KIDS_MODE, false),
+            appLanguage = appLanguage,
             pipedApiBaseUrl = prefs.getString(KEY_PIPED_URL, "https://pipedapi.kavin.rocks")
                 ?: "https://pipedapi.kavin.rocks"
         )
@@ -47,7 +60,9 @@ class SettingsStore(context: Context) {
             .putBoolean(KEY_SPONSORBLOCK, next.sponsorBlockEnabled)
             .putBoolean(KEY_AUDIO_ONLY, next.audioOnlyMode)
             .putBoolean(KEY_TODDLER_KIDS_MODE, next.toddlerKidsMode)
+            .putString(KEY_APP_LANGUAGE, next.appLanguage.name)
             .putString(KEY_PIPED_URL, next.pipedApiBaseUrl)
+            .putBoolean(KEY_STANDARD_YOUTUBE_MIGRATED, true)
             .apply()
         return next
     }
@@ -90,6 +105,8 @@ class SettingsStore(context: Context) {
         const val KEY_SPONSORBLOCK = "sponsor_block"
         const val KEY_AUDIO_ONLY = "audio_only"
         const val KEY_TODDLER_KIDS_MODE = "toddler_kids_mode"
+        const val KEY_APP_LANGUAGE = "app_language"
         const val KEY_PIPED_URL = "piped_base_url"
+        const val KEY_STANDARD_YOUTUBE_MIGRATED = "standard_yt_migrated_v1"
     }
 }

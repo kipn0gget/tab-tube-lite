@@ -193,7 +193,7 @@ class PlayerOverlayView(
                         skippedIds.add(hit.uuid)
                         val targetMs = (hit.endSec * 1000f).toLong()
                         seekToPositionMs(targetMs)
-                        skipNoticePill.text = "${categoryLabel(hit.category)} overgeslagen"
+                        skipNoticePill.text = "${categoryLabel(hit.category)}${AppStrings.of(currentSettings.appLanguage).playerSkippedSuffix}"
                         skipNoticePill.visibility = View.VISIBLE
                         handler.postDelayed({ skipNoticePill.visibility = View.GONE }, 3000L)
                     }
@@ -347,7 +347,7 @@ class PlayerOverlayView(
 
         errorCard.addView(errorLabel)
         val retryBtn = Button(context).apply {
-            text = "Opnieuw laden"
+            text = AppStrings.of(currentSettings.appLanguage).playerRetry
             typeface = fonts.heading
             setTextColor(TabTubeColors.TEXT_PRIMARY)
             setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SIGNAL_RED, TabTubeColors.SIGNAL_RED, 0, 8))
@@ -530,8 +530,10 @@ class PlayerOverlayView(
             updateBookmarkIcon(savedNow)
         }
 
+        val strings = AppStrings.of(settings.appLanguage)
+        audioBanner.text = strings.playerAudioBanner
         loadingIndicator.visibility = View.VISIBLE
-        renderDetailsPanel("VLC Speler zoekt H.264-stream & SponsorBlock…")
+        renderDetailsPanel(strings.playerPreparing)
         renderQuickActions()
 
         handler.removeCallbacks(ticker)
@@ -551,8 +553,8 @@ class PlayerOverlayView(
                 },
                 onFailure = { err ->
                     resolvedStream = null
-                    val msg = err.message ?: "Geen directe MP4/HLS-stream gevonden"
-                    showNativeError("Kon directe videostream niet openen:\n$msg")
+                    val msg = err.message ?: strings.playerNoStream
+                    showNativeError("${strings.playerOpenErrorPrefix}$msg")
                     renderDetailsPanel(msg)
                 }
             )
@@ -757,10 +759,11 @@ class PlayerOverlayView(
     }
 
     private fun renderQuickActions() {
+        val strings = AppStrings.of(currentSettings.appLanguage)
         quickActionRow.removeAllViews()
 
         quickActionRow.addView(Button(context).apply {
-            text = if (isFullscreen) "Normaal scherm" else "Volledig scherm"
+            text = if (isFullscreen) strings.playerFullscreenOn else strings.playerFullscreenOff
             setTextColor(if (isFullscreen) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
             setCompatBackground(context.pillButtonDrawable(isFullscreen))
             setPadding(context.dp(12), 0, context.dp(12), 0)
@@ -776,7 +779,7 @@ class PlayerOverlayView(
         })
 
         quickActionRow.addView(Button(context).apply {
-            text = if (currentSettings.audioOnlyMode) "Alleen Audio: AAN" else "Alleen Audio"
+            text = if (currentSettings.audioOnlyMode) strings.playerAudioOn else strings.playerAudioOff
             setTextColor(if (currentSettings.audioOnlyMode) TabTubeColors.PHOSPHOR_TEAL else TabTubeColors.TEXT_SECONDARY)
             setCompatBackground(context.pillButtonDrawable(currentSettings.audioOnlyMode))
             setPadding(context.dp(12), 0, context.dp(12), 0)
@@ -830,11 +833,12 @@ class PlayerOverlayView(
             setPadding(0, context.dp(4), 0, context.dp(8))
         })
 
-        val engineLabel = if (usingVlc) "VLC Speler (LibVLC)" else "Ingebouwde Hardware Speler"
+        val strings = AppStrings.of(currentSettings.appLanguage)
+        val engineLabel = if (usingVlc) strings.playerEngineVlc else strings.playerEngineNative
         val streamLabel = if (resolvedStream != null) {
             "$engineLabel • ${resolvedStream?.qualityLabel} • ${resolvedStream?.codecLabel} (${resolvedStream?.sourceHost})"
         } else {
-            statusNote ?: "Directe stream voorbereiden…"
+            statusNote ?: strings.playerPreparingDirect
         }
         detailsContainer.addView(TextView(context).apply {
             text = streamLabel
@@ -846,7 +850,7 @@ class PlayerOverlayView(
         })
 
         detailsContainer.addView(TextView(context).apply {
-            text = "SponsorBlock (${sponsorSegments.size} segmenten)"
+            text = String.format(strings.playerSponsorTitleFmt, sponsorSegments.size)
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -855,13 +859,13 @@ class PlayerOverlayView(
 
         if (!currentSettings.sponsorBlockEnabled) {
             detailsContainer.addView(TextView(context).apply {
-                text = "SponsorBlock uitgeschakeld in Tab 2 Tuning."
+                text = strings.playerSponsorDisabled
                 typeface = fonts.body
                 setTextColor(TabTubeColors.TEXT_SECONDARY)
             })
         } else if (sponsorSegments.isEmpty()) {
             detailsContainer.addView(TextView(context).apply {
-                text = "Geen sponsor- of intro-segmenten gemeld voor deze video."
+                text = strings.playerSponsorEmpty
                 typeface = fonts.body
                 setTextColor(TabTubeColors.TEXT_SECONDARY)
             })
@@ -901,11 +905,14 @@ class PlayerOverlayView(
         }
     }
 
-    private fun categoryLabel(category: String): String = when (category) {
-        "sponsor" -> "Sponsor"
-        "intro" -> "Intro"
-        "outro" -> "Outro"
-        "selfpromo" -> "Zelfpromotie"
-        else -> category
+    private fun categoryLabel(category: String): String {
+        val strings = AppStrings.of(currentSettings.appLanguage)
+        return when (category) {
+            "sponsor" -> strings.sponsorCatSponsor
+            "intro" -> strings.sponsorCatIntro
+            "outro" -> strings.sponsorCatOutro
+            "selfpromo" -> strings.sponsorCatSelfPromo
+            else -> category
+        }
     }
 }

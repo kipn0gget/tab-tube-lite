@@ -55,7 +55,7 @@ class ChannelsTabView(
     }
 
     private val catInput = EditText(context).apply {
-        setText("Peuter NL")
+        setText("Tech & Retro")
         hint = "Categorie"
         setHintTextColor(TabTubeColors.TEXT_SECONDARY)
         setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -68,7 +68,14 @@ class ChannelsTabView(
         }
     }
 
-    fun render(subscriptions: List<ChannelSubscription>) {
+    fun render(
+        subscriptions: List<ChannelSubscription>,
+        settings: com.example.data.model.LegacyTuningSettings = com.example.data.model.LegacyTuningSettings()
+    ) {
+        val strings = AppStrings.of(settings.appLanguage)
+        idInput.hint = strings.chHintId
+        nameInput.hint = strings.chHintName
+        catInput.hint = strings.chHintCategory
         listContainer.removeAllViews()
 
         val formCard = LinearLayout(context).apply {
@@ -77,13 +84,13 @@ class ChannelsTabView(
             setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SURFACE_DARK, TabTubeColors.BORDER_SUBTLE, 1, 14))
         }
         formCard.addView(TextView(context).apply {
-            text = "Kanaal toevoegen (Zonder Google-login)"
+            text = strings.chAddTitle
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
         })
         formCard.addView(TextView(context).apply {
-            text = "Gebruikt directe YouTube Atom RSS-feeds — werkt zonder Play Services op Galaxy Tab 2."
+            text = strings.chAddSubtitle
             typeface = fonts.body
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTextColor(TabTubeColors.TEXT_SECONDARY)
@@ -100,7 +107,7 @@ class ChannelsTabView(
         formCard.addView(row)
 
         formCard.addView(Button(context).apply {
-            text = "+ Kanaal opslaan"
+            text = strings.chBtnSave
             typeface = fonts.heading
             setTextColor(TabTubeColors.TEXT_PRIMARY)
             setCompatBackground(context.roundedBoxDrawable(TabTubeColors.SIGNAL_RED, TabTubeColors.SIGNAL_RED, 0, 8))
@@ -120,7 +127,7 @@ class ChannelsTabView(
         val missing = VideoRepository.DEFAULT_CHANNELS.filter { it.channelId !in existingIds }
         if (missing.isNotEmpty()) {
             listContainer.addView(TextView(context).apply {
-                text = "Aanbevolen peuterkanalen herstellen"
+                text = strings.chRestoreDefaults
                 typeface = fonts.body
                 setTextColor(TabTubeColors.TEXT_SECONDARY)
                 setPadding(0, context.dp(14), 0, context.dp(6))
@@ -143,7 +150,7 @@ class ChannelsTabView(
         }
 
         listContainer.addView(TextView(context).apply {
-            text = "Lokale abonnementen (${subscriptions.size})"
+            text = String.format(strings.chLocalSubsFmt, subscriptions.size)
             typeface = fonts.heading
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
             setTextColor(TabTubeColors.TEXT_PRIMARY)
@@ -176,7 +183,7 @@ class ChannelsTabView(
                 setTextColor(TabTubeColors.TEXT_PRIMARY)
             })
             info.addView(TextView(context).apply {
-                text = "${sub.category} • ${sub.channelId}"
+                text = "${strings.formatCategory(sub.category)} • ${sub.channelId}"
                 typeface = fonts.mono
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 11f)
                 setTextColor(TabTubeColors.TEXT_SECONDARY)
@@ -187,7 +194,7 @@ class ChannelsTabView(
                 setTextColor(TabTubeColors.SIGNAL_RED)
                 setCompatBackground(context.pillButtonDrawable(false))
                 layoutParams = LinearLayout.LayoutParams(context.dp(48), context.dp(48))
-                contentDescription = "Verwijder ${sub.name}"
+                contentDescription = "${strings.chRemoveCdPrefix}${sub.name}"
                 setOnClickListener { onRemoveChannel(sub.channelId) }
             }
 
